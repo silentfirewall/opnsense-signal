@@ -1,3 +1,5 @@
+# FIRST DRAFT - USE AT YOUR OWN PERIL
+
 # OPNsense Signal Notifier Plugin - Build & Style Guide
 
 ## Build & Installation Commands
