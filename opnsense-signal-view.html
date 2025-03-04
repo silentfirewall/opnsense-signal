@@ -1,0 +1,117 @@
+<form>
+    <tab id="signalnotifier-general" description="General Settings">
+        <subtab id="signalnotifier-general-settings" description="Signal Settings">
+            {{ partial("layout_partials/base_form",['fields':generalForm,'id':'frm_general_settings'])}}
+        </subtab>
+    </tab>
+    <tab id="signalnotifier-triggers" description="Notification Triggers">
+        <subtab id="signalnotifier-triggers-settings" description="Event Triggers">
+            {{ partial("layout_partials/base_form",['fields':triggersForm,'id':'frm_triggers_settings'])}}
+        </subtab>
+    </tab>
+    <tab id="signalnotifier-urgency" description="Urgency Settings">
+        <subtab id="signalnotifier-urgency-settings" description="Urgent Notifications">
+            {{ partial("layout_partials/base_form",['fields':urgencyForm,'id':'frm_urgency_settings'])}}
+        </subtab>
+    </tab>
+    <tab id="signalnotifier-test" description="Test">
+        <subtab id="signalnotifier-test-notification" description="Send Test Notification">
+            <div class="content-box">
+                <div class="content-box-main">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="form-group">
+                                            <label for="test_message">Test Message</label>
+                                            <input id="test_message" type="text" class="form-control" placeholder="Test notification from OPNsense">
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input id="test_urgent" type="checkbox"> Mark as urgent
+                                            </label>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <button id="sendTestBtn" type="button" class="btn btn-primary">Send Test Notification</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </subtab>
+    </tab>
+</form>
+
+<script>
+    $(document).ready(function() {
+        var data_get_map = {'frm_general_settings':"/api/signalnotifier/getsettings/general",
+                           'frm_triggers_settings':"/api/signalnotifier/getsettings/triggers",
+                           'frm_urgency_settings':"/api/signalnotifier/getsettings/urgency"};
+                           
+        mapDataToFormUI(data_get_map).done(function(data){
+            // place actions to run after load, for example update form styles
+            formatTokenizersUI();
+            $('.selectpicker').selectpicker('refresh');
+        });
+        
+        // link save button to API set action
+        $("#saveAct").click(function(){
+            saveFormToEndpoint(url="/api/signalnotifier/setsettings",
+                               formid='frm_general_settings',
+                               callback_ok=function(){
+                                   // action to run after successful save, for example reconfigure service
+                                   ajaxCall(url="/api/signalnotifier/service/reconfigure", sendData={}, callback=function(data,status) {
+                                       // action to run after reload
+                                   });
+                               });
+        });
+        
+        // Test notification button
+        $("#sendTestBtn").click(function() {
+            var message = $("#test_message").val();
+            var urgent = $("#test_urgent").is(':checked') ? 1 : 0;
+            
+            ajaxCall(
+                url="/api/signalnotifier/sendtest",
+                sendData={"message": message, "urgent": urgent},
+                callback=function(data,status) {
+                    if (data.result === "sent") {
+                        BootstrapDialog.show({
+                            type: BootstrapDialog.TYPE_SUCCESS,
+                            title: 'Success',
+                            message: 'Test notification sent successfully!',
+                            buttons: [{
+                                label: 'Close',
+                                action: function(dialogRef) {
+                                    dialogRef.close();
+                                }
+                            }]
+                        });
+                    } else {
+                        BootstrapDialog.show({
+                            type: BootstrapDialog.TYPE_DANGER,
+                            title: 'Error',
+                            message: 'Failed to send test notification. Check your settings and logs.',
+                            buttons: [{
+                                label: 'Close',
+                                action: function(dialogRef) {
+                                    dialogRef.close();
+                                }
+                            }]
+                        });
+                    }
+                }
+            );
+        });
+    });
+</script>

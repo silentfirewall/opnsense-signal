@@ -1,0 +1,5 @@
+<menu>
+    <Services>
+        <SignalNotifier VisibleName="Signal Notifier" url="/ui/signalnotifier/" order="999"/>
+    </Services>
+</menu>
